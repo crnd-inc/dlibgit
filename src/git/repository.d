@@ -499,12 +499,12 @@ struct GitRepo
     */
     @property bool mergeMsgExists()
     {
-        auto result = git_repository_message(null, 0, _data._payload);
+        auto result = git_repository_message(null, _data._payload);
 
         if (result == GIT_ENOTFOUND)
             return false;
 
-        require(result >= 0);
+        require(result == 0);
         return true;
     }
 
@@ -543,13 +543,14 @@ struct GitRepo
     */
     @property string mergeMsg()
     {
-        char[MaxGitPathLen] buffer;
-        auto result = git_repository_message(buffer.ptr, buffer.length, _data._payload);
+        git_buf buffer;
+        scope(exit) git_buf_free(&buffer);
+        auto result = git_repository_message(&buffer, _data._payload);
 
         if (result == GIT_ENOTFOUND)
             return null;
 
-        require(result >= 0);
+        require(result == 0);
 
         string msg = to!string(buffer.ptr);
         if (msg is null)

@@ -31,7 +31,6 @@ struct GitCloneOptions
 
     static if (targetLibGitVersion == VersionInfo(0, 19, 0)) TransferCallbackDelegate fetchProgessCallback;
 
-    string remoteName;
     static if (targetLibGitVersion == VersionInfo(0, 19, 0)) {
         string pushURL;
         string fetchSpec;
@@ -101,7 +100,6 @@ GitRepo cloneRepo(in char[] url, in char[] localPath, GitCloneOptions options = 
                 cOpts.fetch_progress_payload = &cOpts;
             }
         }
-        cOpts.remote_name = remoteName.gitStr;
         static if (targetLibGitVersion == VersionInfo(0, 19, 0)) {
             cOpts.pushurl = pushURL.gitStr;
             cOpts.fetch_spec = fetchSpec.gitStr;

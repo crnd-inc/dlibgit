@@ -32,10 +32,10 @@ enum GitCheckoutStrategy
     safe = GIT_CHECKOUT_SAFE,
 
     ///
-    safeCreate = GIT_CHECKOUT_SAFE_CREATE,
+    force = GIT_CHECKOUT_FORCE,
 
     ///
-    force = GIT_CHECKOUT_FORCE,
+    recreateMissing = GIT_CHECKOUT_RECREATE_MISSING,
 
     ///
     allowConflicts = GIT_CHECKOUT_ALLOW_CONFLICTS,
@@ -56,25 +56,40 @@ enum GitCheckoutStrategy
     noRefresh = GIT_CHECKOUT_NO_REFRESH,
 
     ///
+    skipUnmerged = GIT_CHECKOUT_SKIP_UNMERGED,
+
+    ///
+    useOurs = GIT_CHECKOUT_USE_OURS,
+
+    ///
+    useTheirs = GIT_CHECKOUT_USE_THEIRS,
+
+    ///
     disablePathspecMatch = GIT_CHECKOUT_DISABLE_PATHSPEC_MATCH,
 
     ///
-    skipLockedDirs = GIT_CHECKOUT_SKIP_LOCKED_DIRECTORIES,
+    skipLockedDirectories = GIT_CHECKOUT_SKIP_LOCKED_DIRECTORIES,
 
-    /// Not implemented yet!
-    skipUnmerged = GIT_CHECKOUT_SKIP_UNMERGED,
+    ///
+    dontOverwriteIgnored = GIT_CHECKOUT_DONT_OVERWRITE_IGNORED,
 
-    /// ditto
-    useOurs = GIT_CHECKOUT_USE_OURS,
+    ///
+    conflictStyleMerge = GIT_CHECKOUT_CONFLICT_STYLE_MERGE,
 
-    /// ditto
-    useTheirs = GIT_CHECKOUT_USE_THEIRS,
+    ///
+    conflictStyleDiff3 = GIT_CHECKOUT_CONFLICT_STYLE_DIFF3,
 
-    /// ditto
-    updateSubmods = GIT_CHECKOUT_UPDATE_SUBMODULES,
+    ///
+    dontRemoveExisting = GIT_CHECKOUT_DONT_REMOVE_EXISTING,
 
-    /// ditto
-    updateSubmodsIfChanged = GIT_CHECKOUT_UPDATE_SUBMODULES_IF_CHANGED,
+    ///
+    dontWriteIndex = GIT_CHECKOUT_DONT_WRITE_INDEX,
+
+    ///
+    updateSubmodules = GIT_CHECKOUT_UPDATE_SUBMODULES,
+
+    ///
+    updateSubmodulesIfChanged = GIT_CHECKOUT_UPDATE_SUBMODULES_IF_CHANGED,
 }
 
 ///
@@ -140,7 +155,7 @@ extern(C) void cCheckoutProgressCallback(
 
 struct GitCheckoutOptions
 {
-    uint version_ = git_checkout_opts.init.version_;
+    uint version_ = git_checkout_options.init.version_;
 
     GitCheckoutStrategy strategy;
 
@@ -160,7 +175,7 @@ struct GitCheckoutOptions
     string targetDir;
 }
 
-package void toCCheckoutOpts(ref GitCheckoutOptions dOpts, ref git_checkout_opts cOpts)
+package void toCCheckoutOpts(ref GitCheckoutOptions dOpts, ref git_checkout_options cOpts)
 {
     with (dOpts)
     {
@@ -189,28 +204,28 @@ package void toCCheckoutOpts(ref GitCheckoutOptions dOpts, ref git_checkout_opts
 
 void checkoutHead(GitRepo repo, GitCheckoutOptions opts = GitCheckoutOptions.init)
 {
-    git_checkout_opts cOpts;
+    git_checkout_options cOpts;
     opts.toCCheckoutOpts(cOpts);
     require(git_checkout_head(repo.cHandle, &cOpts) == 0);
 }
 
 void checkout(GitRepo repo, GitIndex index, GitCheckoutOptions opts = GitCheckoutOptions.init) // TODO: Convert.
 {
-    git_checkout_opts cOpts;
+    git_checkout_options cOpts;
     opts.toCCheckoutOpts(cOpts);
     require(git_checkout_index(repo.cHandle, index.cHandle, &cOpts) == 0);
 }
 
 void checkout(GitRepo repo, GitObject treeish, GitCheckoutOptions opts = GitCheckoutOptions.init)
 {
-    git_checkout_opts cOpts;
+    git_checkout_options cOpts;
     opts.toCCheckoutOpts(cOpts);
     require(git_checkout_tree(repo.cHandle, treeish.cHandle, &cOpts) == 0);
 }
 
 void checkout(GitRepo repo, GitTree treeish, GitCheckoutOptions opts = GitCheckoutOptions.init)
 {
-    git_checkout_opts cOpts;
+    git_checkout_options cOpts;
     opts.toCCheckoutOpts(cOpts);
     require(git_checkout_tree(repo.cHandle, cast(git_object*)treeish.cHandle, &cOpts) == 0);
 }

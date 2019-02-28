@@ -74,7 +74,7 @@ enum targetLibGitVersion = VersionInfo(LIBGIT2_VER_MAJOR, LIBGIT2_VER_MINOR, LIB
 enum dlibgitVersion = VersionInfo(0, 50, 0);
 
 
-static assert(targetLibGitVersion == VersionInfo(0, 25, 1));
+static assert(targetLibGitVersion >= VersionInfo(0, 25, 1));
 
 /**
     Return the runtime version of the libgit2 library
@@ -103,7 +103,7 @@ shared static this()
 void verifyCompatibleLibgit()
 {
     auto libgitVersion = getLibGitVersion();
-    enforce(libgitVersion == targetLibGitVersion,
+    enforce(libgitVersion >= targetLibGitVersion,
             format("Error: dlibgit (%s) requires libgit2 (%s).\nCurrently loaded libgit2 version is (%s).",
                    dlibgitVersion, targetLibGitVersion, libgitVersion));
 

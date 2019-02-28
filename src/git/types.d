@@ -78,7 +78,7 @@ enum GitBranchType
 /** Valid modes for index and tree entries. */
 enum GitFileModeType
 {
-    new_ = GIT_FILEMODE_NEW,
+    unreadable = GIT_FILEMODE_UNREADABLE,
     tree = GIT_FILEMODE_TREE,
     blob = GIT_FILEMODE_BLOB,
     blob_exe = GIT_FILEMODE_BLOB_EXECUTABLE,
@@ -126,7 +126,7 @@ struct GitTransferProgress
     uint totalObjects;
     uint indexedObjects;
     uint receivedObjects;
-    static if (targetLibGitVersion == VersionInfo(0, 25, 1)) {
+    static if (targetLibGitVersion >= VersionInfo(0, 25, 1)) {
         uint local_objects;
         uint total_deltas;
         uint indexed_deltas;

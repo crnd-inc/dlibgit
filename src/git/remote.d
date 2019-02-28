@@ -88,12 +88,6 @@ struct GitRemote
     }
 
     ///
-    void save()
-    {
-        require(git_remote_save(_data._payload) == 0);
-    }
-
-    ///
     @property string name() const
     {
         return to!string(git_remote_name(_data._payload));
@@ -108,7 +102,7 @@ struct GitRemote
     ///
     @property void name(in char[] url)
     {
-        require(git_remote_set_url(_data._payload, url.gitStr) == 0);
+        require(git_remote_set_url(_repo.cHandle, git_remote_name(_data._payload), url.gitStr) == 0);
     }
 
     ///
@@ -120,7 +114,7 @@ struct GitRemote
     ///
     @property void pushURL(in char[] url)
     {
-        require(git_remote_set_pushurl(_data._payload, url.gitStr) == 0);
+        require(git_remote_set_pushurl(_repo.cHandle, git_remote_name(_data._payload), url.gitStr) == 0);
     }
 
     @property GitTransferProgress stats()
@@ -129,11 +123,11 @@ struct GitRemote
     }
 
 	@property GitRemoteAutotag autoTag() { return cast(GitRemoteAutotag)git_remote_autotag(this.cHandle); }
-	@property void autoTag(GitRemoteAutotag value) { git_remote_set_autotag(this.cHandle, cast(git_remote_autotag_option_t)value); }
+	@property void autoTag(GitRemoteAutotag value) { git_remote_set_autotag(_repo.cHandle, git_remote_name(_data._payload), cast(git_remote_autotag_option_t)value); }
 
     void connect(GitDirection direction)
     {
-        require(git_remote_connect(_data._payload, cast(git_direction)direction) == 0);
+        require(git_remote_connect(_data._payload, cast(git_direction)direction, null, null, null) == 0);
     }
 
     ///
@@ -170,24 +164,32 @@ struct GitRemote
         ctx.cb = callbacks;
 
         git_remote_callbacks gitcallbacks;
-        gitcallbacks.progress = &progress_cb;
+        static if (targetLibGitVersion < VersionInfo(0, 23, 0)) {
+            gitcallbacks.progress = &progress_cb;
+        }
         gitcallbacks.completion = &completion_cb;
         static if (targetLibGitVersion >= VersionInfo(0, 20, 0)) {
             //gitcallbacks.credentials = &cred_acquire_cb;
             gitcallbacks.transfer_progress = &transfer_progress_cb;
         }
         gitcallbacks.payload = cast(void*)&ctx;
-        require(git_remote_set_callbacks(_data._payload, &gitcallbacks) == 0);
 
         static if (targetLibGitVersion == VersionInfo(0, 19, 0)) {
+            require(git_remote_set_callbacks(_data._payload, &gitcallbacks) == 0);
             require(git_remote_download(_data._payload, &transfer_progress_cb, cast(void*)&ctx) == 0, ctx.ex);
-        } else {
+        } else static if (targetLibGitVersion < VersionInfo(0, 23, 0)){
+            require(git_remote_set_callbacks(_data._payload, &gitcallbacks) == 0);
             require(git_remote_download(_data._payload) == 0, ctx.ex);
+        } else {
+            git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+            opts.callbacks = gitcallbacks;
+
+            require(git_remote_download(_data._payload, null, &opts) == 0, ctx.ex);
         }
         if (ctx.ex) throw ctx.ex;
     }
 
-    void addFetch(string refspec) { require(git_remote_add_fetch(this.cHandle, refspec.toStringz) == 0); }
+    void addFetch(string refspec) { require(git_remote_add_fetch(_repo.cHandle, refspec.toStringz, git_remote_name(_data._payload)) == 0); }
 
     void updateTips(scope void delegate(string refname, in ref GitOid a, in ref GitOid b) updateTips)
     {
@@ -215,8 +217,12 @@ struct GitRemote
         git_remote_callbacks gitcallbacks;
         gitcallbacks.update_tips = &update_cb;
         gitcallbacks.payload = &ctx;
-        require(git_remote_set_callbacks(_data._payload, &gitcallbacks) == 0);
-        auto ret = git_remote_update_tips(_data._payload);
+        static if (targetLibGitVersion < VersionInfo(0, 23, 0)){
+            require(git_remote_set_callbacks(_data._payload, &gitcallbacks) == 0);
+            auto ret = git_remote_update_tips(_data._payload);
+        } else {
+            auto ret = git_remote_update_tips(_data._payload, &gitcallbacks, 1, GIT_REMOTE_DOWNLOAD_TAGS_UNSPECIFIED, null);
+        }
         if (ctx.e) throw ctx.e;
         require(ret == 0);
     }
@@ -259,18 +265,10 @@ GitRemote createRemote(GitRepo repo, in char[] name, in char[] url)
 }
 
 ///
-GitRemote createRemoteInMemory(GitRepo repo, in char[] fetch, in char[] url)
+GitRemote lookupRemote(GitRepo repo, in char[] name)
 {
     git_remote* result;
-    require(git_remote_create_inmemory(&result, repo.cHandle, fetch.gitStr, url.gitStr) == 0);
-    return GitRemote(repo, result);
-}
-
-///
-GitRemote loadRemote(GitRepo repo, in char[] name)
-{
-    git_remote* result;
-    require(git_remote_load(&result, repo.cHandle, name.gitStr) == 0);
+    require(git_remote_lookup(&result, repo.cHandle, name.gitStr) == 0);
     return GitRemote(repo, result);
 }
 

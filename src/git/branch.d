@@ -17,6 +17,7 @@ import git.version_;
 import deimos.git2.branch;
 import deimos.git2.errors;
 import deimos.git2.types;
+import deimos.git2.buffer;
 
 import std.conv : to;
 import std.string : toStringz;
@@ -111,11 +112,12 @@ struct GitBranch {
 	{
 		const(char)* branch_name;
 		require(git_branch_name(&branch_name, this.cHandle) == 0);
-		auto len = git_branch_upstream_name(null, 0, _ref.owner.cHandle, branch_name);
+		auto len = git_branch_upstream_name(null, _ref.owner.cHandle, branch_name);
 		require(len > 0);
-		auto dst = new char[len];
-		require(git_branch_upstream_name(dst.ptr, dst.length, _ref.owner.cHandle, branch_name) == len);
-		return cast(immutable)dst[0 .. $-1]; // skip trailing 0
+		git_buf buffer;
+		scope(exit) git_buf_free(&buffer);
+		require(git_branch_upstream_name(&buffer, _ref.owner.cHandle, branch_name) == len);
+		return to!string(buffer.ptr);
 	}
 
 	@property void upstreamName(string name)
@@ -129,11 +131,12 @@ struct GitBranch {
 	{
 		const(char)* branch_name;
 		require(git_branch_name(&branch_name, this.cHandle) == 0);
-		auto len = git_branch_remote_name(null, 0, _ref.owner.cHandle, branch_name);
+		auto len = git_branch_remote_name(null, _ref.owner.cHandle, branch_name);
 		require(len > 0);
-		auto dst = new char[len];
-		require(git_branch_remote_name(dst.ptr, dst.length, _ref.owner.cHandle, branch_name) == len);
-		return cast(immutable)dst[0 .. $-1]; // skip trailing 0
+		git_buf buffer;
+		scope(exit) git_buf_free(&buffer);
+		require(git_branch_remote_name(&buffer, _ref.owner.cHandle, branch_name) == len);
+		return to!string(buffer.ptr);
 	}
 
 	GitBranch move(string new_name, bool force)

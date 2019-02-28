@@ -190,8 +190,8 @@ struct GitOidShorten
     */
     this(size_t length)
     {
-        enforceEx!GitException(length <= GitOid.MaxHexSize,
-                               format("Error: Minimum hex length cannot be larger than '%s' (GitOid.MaxHexSize), it is '%s'", GitOid.MaxHexSize, length));
+        enforce!GitException(length <= GitOid.MaxHexSize,
+                             format("Error: Minimum hex length cannot be larger than '%s' (GitOid.MaxHexSize), it is '%s'", GitOid.MaxHexSize, length));
 
         _data = Data(length);
         _minLength = length;
@@ -223,8 +223,8 @@ struct GitOidShorten
     */
     void add(in char[] hex)
     {
-        enforceEx!GitException(hex.length == GitOid.MaxHexSize,
-                               format("Error: Hex string size must be equal to '%s' (GitOid.MaxHexSize), not '%s'", GitOid.MaxHexSize, hex.length));
+        enforce!GitException(hex.length == GitOid.MaxHexSize,
+                             format("Error: Hex string size must be equal to '%s' (GitOid.MaxHexSize), not '%s'", GitOid.MaxHexSize, hex.length));
 
         auto result = git_oid_shorten_add(_data._payload, hex.ptr);
         require(result >= 0);

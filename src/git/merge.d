@@ -14,7 +14,7 @@ import git.repository;
 import git.tree;
 import git.util;
 
-GitIndex mergeTrees(GitRepo repo, GitTree ancestor_tree, GitTree our_tree, GitTree their_tree, const git_merge_tree_opts* opts = null)
+GitIndex mergeTrees(GitRepo repo, GitTree ancestor_tree, GitTree our_tree, GitTree their_tree, const git_merge_options* opts = null)
 {
 	git_index* index;
 	require(git_merge_trees(&index, repo.cHandle(), ancestor_tree.cHandle(), our_tree.cHandle(), their_tree.cHandle(), opts) == 0);
