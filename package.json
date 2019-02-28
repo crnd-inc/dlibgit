@@ -6,7 +6,7 @@
 	"version": "0.25.1",
 	"authors": ["Andrej Mitrovic", "David Nadlinger", "Sönke Ludwig"],
 	"dependencies": {
-		"libgit2": "==0.25.1"
+		"odoo-packager:libgit2": ">=0.25.1"
 	},
 	"excludedSourceFiles": ["src/git/c/*"]
 }
